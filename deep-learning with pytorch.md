@@ -1,0 +1,202 @@
+# deep-learning with pytorch
+
+## torch基础
+
+### 数据操作
+
+- 创建
+
+```python
+import torch
+x = torch.empty(5, 3)
+print(x)
+x = torch.rand(5, 3)
+print(x)
+x = torch.zeros(5, 3, dtype=torch.long)
+print(x)
+x = torch.tensor([5.5, 3])
+print(x)
+x = x.new_ones(5, 3, dtype=torch.float64)  # 返回的tensor默认具有相同的torch.dtype和
+print(x)
+
+x = torch.randn_like(x, dtype=torch.float) # 指定新的数据类型
+print(x)
+x.size()
+x.shape()
+x.shape
+history -n
+history
+```
+
+<img src="/Users/tazim/Library/Application Support/typora-user-images/image-20210102094751295.png" alt="image-20210102094751295" style="zoom:50%;" />
+
+
+
+- 运算
+
+```python
+y = torch.rand(5,3)
+x+y
+torch.add(x,y)
+y.add_(x)
+```
+
+- 索引  **引用共享内存空间**
+
+```python
+y = x[0, :]
+y += 1
+```
+
+- 改变形状
+
+```python
+y = x.view(15)
+z = x.view(-1, 5)  # -1所指的维度可以根据其他维度的值推出来
+```
+
+ **-1 代表自适应 也是共享内存的**
+
+```python
+x_cp = x.clone().view(15)
+```
+
+- 线性代数运算
+
+<img src="/Users/tazim/Library/Application Support/typora-user-images/image-20210102095910233.png" alt="image-20210102095910233" style="zoom: 50%;" />
+
+- 广播运算
+
+不同形状的矩阵运算会触发广播 复制成相同形状再运算
+
+- 运算内存开销
+
+  add_() 或 torch.add(x, y, out=y) 可以减低开销 **id()**可用来查看内存地址
+
+- numpy转换 `torch.from_numpy(a)` 会进行数据拷贝
+
+- tensor on GPU
+
+```python
+# 以下代码只有在PyTorch GPU版本上才会执行
+if torch.cuda.is_available():
+    device = torch.device("cuda")          # GPU
+    y = torch.ones_like(x, device=device)  # 直接创建一个在GPU上的Tensor
+    x = x.to(device)                       # 等价于 .to("cuda")
+    z = x + y
+    print(z)
+    print(z.to("cpu", torch.double))       # to()还可以同时更改数据类型
+```
+
+
+
+## 深度学习基础
+
+### 线性回归
+
+#### 原理
+
+##### 模型定义
+
+<img src="/Users/tazim/Library/Application Support/typora-user-images/image-20210102102120203.png" alt="image-20210102102120203" style="zoom:50%;" />
+
+##### 模型训练
+
+1. 训练数据 training set =  sample set = label+feature 
+
+   <img src="/Users/tazim/Library/Application Support/typora-user-images/image-20210102102154473.png" alt="image-20210102102154473" style="zoom: 50%;" />
+
+2. loss function
+
+   <img src="/Users/tazim/Library/Application Support/typora-user-images/image-20210102102349893.png" alt="image-20210102102349893" style="zoom:50%;" />目标是我们希望找出一组模型参数，来使训练样本平均损失最小
+
+3. gradient descent
+
+   <img src="/Users/tazim/Library/Application Support/typora-user-images/image-20210102102958373.png" alt="image-20210102102958373" style="zoom:50%;" />先选取一组模型参数的初始值，如随机选取；接下来对参数进行多次迭代，使每次迭代都可能降低损失函数的值。在每次迭代中，先随机均匀采样一个由固定数目训练数据样本所组成的小批量（mini-batch）B，然后求小批量中数据样本的平均损失有关模型参数的导数（梯度）。
+
+   
+
+##### 模型预测
+
+![image-20210102103037936](/Users/tazim/Library/Application Support/typora-user-images/image-20210102103037936.png)来预测模型
+
+#### 实现
+
+1.  [从零开始](http://tazimie.xyz/liner_1.py)
+2.  [简洁实现](http://tazimie.xyz/liner_2.py)
+
+
+
+### softmax回归
+
+##### 原理
+
+对于这样的离散值预测问题，我们可以使用诸如softmax回归在内的分类模型。和线性回归不同，softmax回归的输出单元从一个变成了多个
+
+**回归模型**
+
+<img src="/Users/tazim/Library/Application Support/typora-user-images/image-20210102111733883.png" alt="image-20210102111733883" style="zoom:50%;" />
+
+**softmax运算符**
+
+<img src="/Users/tazim/Library/Application Support/typora-user-images/image-20210102112701175.png" alt="image-20210102112701175" style="zoom:50%;" />
+
+**softmax回归对样本*i*分类的矢量计算表达式为**
+
+![image-20210102112829914](/Users/tazim/Library/Application Support/typora-user-images/image-20210102112829914.png)
+
+**交叉熵cross entropy** 
+
+![image-20210102113057473](/Users/tazim/Library/Application Support/typora-user-images/image-20210102113057473.png)
+
+**交叉熵损失函数**
+
+<img src="/Users/tazim/Library/Application Support/typora-user-images/image-20210102113701060.png" alt="image-20210102113701060" style="zoom: 67%;" />
+
+`最小化交叉熵损失函数等价于最大化训练数据集所有标签类别的联合预测概率`
+
+#### 实现
+
+
+
+### MLP 多层感知机
+
+##### 隐藏层
+
+##### 激活函数
+
+1. ReLU
+2. sigmoid
+3. tanh
+
+##### 多层感知机
+
+
+
+
+
+### 深度学习常见问题和优化
+
+##### 欠拟合与过拟合
+
+- 由于无法从训练误差估计泛化误差，一味地降低训练误差并不意味着泛化误差一定会降低。机器学习模型应关注降低泛化误差。
+- 可以使用验证数据集来进行模型选择。
+- 欠拟合指模型无法得到较低的训练误差，过拟合指模型的训练误差远小于它在测试数据集上的误差。
+- 应选择复杂度合适的模型并避免使用过少的训练样本。
+
+过拟合现象的解决方法
+
+1. 权重衰减（weight decay）
+
+2. 丢弃法（dropout）
+
+##### 正向传播，反向传播和计算图
+
+
+
+##### 数值稳定性
+
+衰减（vanishing）和爆炸（explosion）
+
+随机初始化模型参数
+

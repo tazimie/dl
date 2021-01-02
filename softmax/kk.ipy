@@ -1,0 +1,282 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "batch_size = 256\n",
+    "train_iter, test_iter = d2l.load_data_fashion_mnist(batch_size)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "num_inputs = 784\n",
+    "num_outputs = 10\n",
+    "\n",
+    "W = torch.tensor(np.random.normal(0, 0.01, (num_inputs, num_outputs)), dtype=torch.float)\n",
+    "b = torch.zeros(num_outputs, dtype=torch.float)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "W.requires_grad_(requires_grad=True)\n",
+    "b.requires_grad_(requires_grad=True) "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def softmax(X):\n",
+    "    X_exp = X.exp()\n",
+    "    partition = X_exp.sum(dim=1, keepdim=True)\n",
+    "    return X_exp / partition  # 这里应用了广播机制"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def net(X):\n",
+    "    return softmax(torch.mm(X.view((-1, num_inputs)), W) + b)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "torch.LongTensor([0,2])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "y=torch.LongTensor([0,2])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "y.view(-1,1)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "y.view(1,2)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "y.view(1,1)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "%history"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def cross_entropy(y_hat, y):\n",
+    "    return - torch.log(y_hat.gather(1, y.view(-1, 1)))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def accuracy(y_hat, y):\n",
+    "    return (y_hat.argmax(dim=1) == y).float().mean().item()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def evaluate_accuracy(data_iter, net):\n",
+    "    acc_sum, n = 0.0, 0\n",
+    "    for X, y in data_iter:\n",
+    "        acc_sum += (net(X).argmax(dim=1) == y).float().sum().item()\n",
+    "        n += y.shape[0]\n",
+    "    return acc_sum / n\n",
+    "    "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 15,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "num_epochs, lr = 5, 0.1\n",
+    "\n",
+    "# 本函数已保存在d2lzh包中方便以后使用\n",
+    "def train_ch3(net, train_iter, test_iter, loss, num_epochs, batch_size,\n",
+    "              params=None, lr=None, optimizer=None):\n",
+    "    for epoch in range(num_epochs):\n",
+    "        train_l_sum, train_acc_sum, n = 0.0, 0.0, 0\n",
+    "        for X, y in train_iter:\n",
+    "            y_hat = net(X)\n",
+    "            l = loss(y_hat, y).sum()\n",
+    "\n",
+    "            # 梯度清零\n",
+    "            if optimizer is not None:\n",
+    "                optimizer.zero_grad()\n",
+    "            elif params is not None and params[0].grad is not None:\n",
+    "                for param in params:\n",
+    "                    param.grad.data.zero_()\n",
+    "\n",
+    "            l.backward()\n",
+    "            if optimizer is None:\n",
+    "                d2l.sgd(params, lr, batch_size)\n",
+    "            else:\n",
+    "                optimizer.step()  # “softmax回归的简洁实现”一节将用到\n",
+    "\n",
+    "\n",
+    "            train_l_sum += l.item()\n",
+    "            train_acc_sum += (y_hat.argmax(dim=1) == y).sum().item()\n",
+    "            n += y.shape[0]\n",
+    "        test_acc = evaluate_accuracy(test_iter, net)\n",
+    "        print('epoch %d, loss %.4f, train acc %.3f, test acc %.3f'\n",
+    "              % (epoch + 1, train_l_sum / n, train_acc_sum / n, test_acc))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 16,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def evaluate_accuracy(data_iter, net):\n",
+    "    acc_sum, n = 0.0, 0\n",
+    "    for X, y in data_iter:\n",
+    "        acc_sum += (net(X).argmax(dim=1) == y).float().sum().item()\n",
+    "        n += y.shape[0]\n",
+    "    return acc_sum / n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 17,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def train_ch3(net, train_iter, test_iter, loss, num_epochs, batch_size,\n",
+    "              params=None, lr=None, optimizer=None):\n",
+    "    for epoch in range(num_epochs):\n",
+    "        train_l_sum, train_acc_sum, n = 0.0, 0.0, 0\n",
+    "        for X, y in train_iter:\n",
+    "            y_hat = net(X)\n",
+    "            l = loss(y_hat, y).sum()\n",
+    "\n",
+    "            # 梯度清零\n",
+    "            if optimizer is not None:\n",
+    "                optimizer.zero_grad()\n",
+    "            elif params is not None and params[0].grad is not None:\n",
+    "                for param in params:\n",
+    "                    param.grad.data.zero_()\n",
+    "\n",
+    "            l.backward()\n",
+    "            if optimizer is None:\n",
+    "                d2l.sgd(params, lr, batch_size)\n",
+    "            else:\n",
+    "                optimizer.step()  # “softmax回归的简洁实现”一节将用到\n",
+    "\n",
+    "\n",
+    "            train_l_sum += l.item()\n",
+    "            train_acc_sum += (y_hat.argmax(dim=1) == y).sum().item()\n",
+    "            n += y.shape[0]\n",
+    "        test_acc = evaluate_accuracy(test_iter, net)\n",
+    "        print('epoch %d, loss %.4f, train acc %.3f, test acc %.3f'\n",
+    "              % (epoch + 1, train_l_sum / n, train_acc_sum / n, test_acc))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 18,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "train_ch3(net, train_iter, test_iter, cross_entropy, num_epochs, batch_size, [W, b], lr)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 19,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "X, y = iter(test_iter).next()\n",
+    "\n",
+    "true_labels = d2l.get_fashion_mnist_labels(y.numpy())\n",
+    "pred_labels = d2l.get_fashion_mnist_labels(net(X).argmax(dim=1).numpy())\n",
+    "titles = [true + '\\n' + pred for true, pred in zip(true_labels, pred_labels)]\n",
+    "\n",
+    "d2l.show_fashion_mnist(X[0:9], titles[0:9])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 20,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "?"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 21,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "%magic"
+   ]
+  }
+ ],
+ "metadata": {},
+ "nbformat": 4,
+ "nbformat_minor": 4
+}

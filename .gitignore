@@ -2,3 +2,7 @@
 .vim
 .DS_Store
 .ide
+data/
+d2lzh_pytorch/
+img/
+.idea

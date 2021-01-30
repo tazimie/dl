@@ -7,7 +7,7 @@ from ..figure import plt, use_svg_display
 
 
 def load_data_fashion_mnist(batch_size, resize=None, root=os.path.join(
-        '~', '.pytorch', 'datasets', 'fashion-mnist')):
+        '~',  'Datasets', 'FashionMNIST')):
     """Download the Fashion-MNIST dataset and then load into memory."""
     root = os.path.expanduser(root)
     transformer = []

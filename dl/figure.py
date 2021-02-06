@@ -2,7 +2,7 @@
 from IPython import display
 from matplotlib import pyplot as plt
 
-__all__ = ['set_figsize', 'use_svg_display']
+__all__ = ('set_figsize', 'use_svg_display')
 
 
 def set_figsize(figsize=(3.5, 2.5)):

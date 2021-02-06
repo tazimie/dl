@@ -3,6 +3,6 @@
 .DS_Store
 .ide
 data/
-d2lzh_pytorch/
+dl/
 img/
 .idea

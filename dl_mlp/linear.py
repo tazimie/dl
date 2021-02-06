@@ -1,10 +1,11 @@
 from torch import nn
 
-from dl import data_iter, linreg, squared_loss, sgd
+from dl import data_iter, linear_regression, squared_loss, sgd
 
 import torch
 import numpy as np
-__all__=['linear_regression_zero','linear_regression_simple']
+
+__all__ = ['linear_regression_zero', 'linear_regression_simple']
 
 true_w = [2, -3.4]
 true_b = 4.2
@@ -26,7 +27,7 @@ batch_size = 10
 
 
 def linear_regression_zero():
-    net = linreg
+    net = linear_regression
     loss = squared_loss
 
     for epoch in range(num_epochs):  # 训练模型一共需要num_epochs个迭代周期
@@ -45,8 +46,8 @@ def linear_regression_zero():
 
 def linear_regression_simple():
     import torch.utils.data as Data
-    dataset = Data.TensorDataset(features,labels)
-    data_iter = Data.DataLoader(dataset,batch_size,shuffle=True)
+    dataset = Data.TensorDataset(features, labels)
+    data_iter = Data.DataLoader(dataset, batch_size, shuffle=True)
 
     net = nn.Sequential(nn.Linear(num_inputs, 1))
 
@@ -67,17 +68,5 @@ def linear_regression_simple():
         print('epoch %d, loss: %f' % (epoch, l.item()))
 
 
-
-
-
 if __name__ == '__main__':
     linear_regression_simple()
-
-
-
-
-
-
-
-
-

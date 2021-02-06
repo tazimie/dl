@@ -3,43 +3,34 @@ import numpy as np
 from torch import nn
 from torch.nn import init
 
-from dl import load_data_fashion_mnist, cross_entropy, sgd, softmax
+from dl import load_data_fashion_mnist, sgd, softmax, load_data_fashion_mnist_small
 from dl.model import FlattenLayer
-from dl.optimizer import evaluate_accuracy
+from dl.train import train_fashion_mnist
+from collections import OrderedDict
 
 batch_size = 256
 train_iter, test_iter = load_data_fashion_mnist(batch_size)
+# train_iter, test_iter = load_data_fashion_mnist_small(batch_size)
 num_inputs = 784
 num_outputs = 10
+num_epochs, lr = 5, 100.0
 
-W = torch.tensor(np.random.normal(0, 0.01, (num_inputs, num_outputs)), dtype=torch.float, requires_grad=True)
-b = torch.zeros(num_outputs, dtype=torch.float, requires_grad=True)
-num_epochs, lr = 5, 0.1
-
-
-
+__all__ = ("softmax_zero", "softmax_simple")
 
 
 def softmax_zero():
     def net(X):
         return softmax(torch.mm(X.view((-1, num_inputs)), W) + b)
-    for epoch in range(num_epochs):
-        train_l_sum, train_acc_sum, n = 0.0, 0.0, 0
-        for X, y in train_iter:
-            y_hat = net(X)
-            print(y_hat)
-            l = cross_entropy(y_hat, y).sum()
-            # 梯度清零
-            W.grad.data.zero_()
-            b.grad.data.zero_()
-            l.backward()
-            sgd([W, b], lr, batch_size)
-            train_l_sum += l.item()
-            train_acc_sum += (y_hat.argmax(dim=1) == y).sum().item()
-            n += y.shape[0]
-        test_acc = evaluate_accuracy(test_iter, net)
-        print('epoch %d, loss %.4f, train acc %.3f, test acc %.3f'
-              % (epoch + 1, train_l_sum / n, train_acc_sum / n, test_acc))
+
+    W = torch.tensor(np.random.normal(0, 0.01, (num_inputs, num_outputs)),
+                     dtype=torch.float, requires_grad=True)
+    b = torch.zeros(num_outputs, dtype=torch.float, requires_grad=True)
+    params = [W, b]
+    for param in params:
+        param.requires_grad_(requires_grad=True)
+    optimizer = sgd
+    loss = torch.nn.CrossEntropyLoss()
+    train_fashion_mnist(net, train_iter, test_iter, loss, num_epochs, batch_size, params, lr, optimizer)
 
 
 def softmax_simple():
@@ -52,31 +43,12 @@ def softmax_simple():
     init.normal_(net.linear.weight, mean=0, std=0.01)
     init.constant_(net.linear.bias, val=0)
     loss = nn.CrossEntropyLoss()
+    # PyTorch提供了一个包括softmax运算和交叉熵损失计算的函数。它的数值稳定性更好
     optimizer = torch.optim.SGD(net.parameters(), lr=0.1)
-    num_epochs, lr = 5, 0.1
+    train_fashion_mnist(net, train_iter, test_iter, loss, num_epochs, batch_size, optimizer=optimizer)
 
-    # 本函数已保存在d2lzh包中方便以后使用
-    for epoch in range(num_epochs):
-        train_l_sum, train_acc_sum, n = 0.0, 0.0, 0
-        for x, y in train_iter:
-            y_hat = net(x)
-            l = loss(y_hat, y).sum()
-            optimizer.zero_grad()
-            l.backward()
-            optimizer.step()  # “softmax回归的简洁实现”一节将用到
-            train_l_sum += l.item()
-            train_acc_sum += (y_hat.argmax(dim=1) == y).sum().item()
-            n += y.shape[0]
-        test_acc = evaluate_accuracy(test_iter, net)
-        print('epoch %d, loss %.4f, train acc %.3f, test acc %.3f'
-              % (epoch + 1, train_l_sum / n, train_acc_sum / n, test_acc))
-
-    pass
-
-
-from collections import OrderedDict
 
 if __name__ == '__main__':
-    softmax_zero()
-    # softmax_simple()
+    # softmax_zero()
+    softmax_simple()
     pass

@@ -14,15 +14,19 @@
 
 卷积⽹络会将输⼊层的数据传递到⼀系列**卷积、 池化**等操作进⾏**特征提取和转化**，最终由**全连接层对特征进⾏汇总和结果输出**。
 
-![image-20210110140328823](assets/image-20210110140328823.png)
+![image-20210110140328823](../assets/image-20210110140328823.png)
 
 ## 5.2 卷积在图像中有什么直观作⽤
 
-![image-20210110140403119](assets/image-20210110140403119.png)
+![image-20210110140403119](../assets/image-20210110140403119.png)
 
 ## 5.3 卷积层有哪些基本参数？
 
-kernel-size padding stride in-channels out-channels
+1. kernel-size 
+2. padding 
+3. stride 
+4. in-channels
+5. out-channels
 
 ## 5.4 卷积核有什么类型？
 
@@ -43,13 +47,13 @@ kernel-size padding stride in-channels out-channels
 
 ## 5.8 1*1卷积作⽤？
 
-NIN  NIN对不同通道的特征整合到MLP⾃⽹络中，让不同通道的特征能够交互整合，使通道之间的信 息得以流通
+- NIN  NIN对不同通道的特征整合到MLP⾃⽹络中，让不同通道的特征能够交互整合，使通道之间的信 息得以流通
 
-GoogLeNet 采⽤ 卷积核来减少模型的参数量
+- GoogLeNet 采⽤ 卷积核来减少模型的参数量
 
 ## 5.9 卷积层和池化层有什么区别？
 
-![image-20210110144523594](assets/image-20210110144523594.png)
+![image-20210110144523594](../assets/image-20210110144523594.png)
 
 ## 5.10 卷积核是否⼀定越⼤越好？
 

@@ -1,6 +1,6 @@
 from torch import nn
 
-from d2lzh_pytorch import data_iter, linreg, squared_loss, sgd
+from dl import data_iter, linreg, squared_loss, sgd
 
 import torch
 import numpy as np

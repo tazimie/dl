@@ -3,9 +3,9 @@ import numpy as np
 from torch import nn
 from torch.nn import init
 
-from d2lzh_pytorch import load_data_fashion_mnist, cross_entropy, sgd, softmax
-from d2lzh_pytorch.model import FlattenLayer
-from d2lzh_pytorch.optimizer import evaluate_accuracy
+from dl import load_data_fashion_mnist, cross_entropy, sgd, softmax
+from dl.model import FlattenLayer
+from dl.optimizer import evaluate_accuracy
 
 batch_size = 256
 train_iter, test_iter = load_data_fashion_mnist(batch_size)

@@ -1,46 +1,51 @@
-import time
-import math
-import numpy as np
 import torch
 from torch import nn, optim
-import torch.nn.functional as F
+from torch.utils.data import DataLoader
+import os
 
-import sys
-import dl as d2l
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-(corpus_indices, char_to_idx, idx_to_char, vocab_size) = d2l.load_data_jay_lyrics()
-
-num_hiddens = 256
-# rnn_layer = nn.LSTM(input_size=vocab_size, hidden_size=num_hiddens) # 已测试
-rnn_layer = nn.RNN(input_size=vocab_size, hidden_size=num_hiddens)
-num_steps = 3
-batch_size = 2
-state = None
-X = torch.rand(num_steps, batch_size, vocab_size)
-Y, state_new = rnn_layer(X, state)
+import torchvision
+import os
 
 
-# 本类已保存在d2lzh_pytorch包中方便以后使用
-class RNNModel(nn.Module):
-    def __init__(self, rnn_layer, vocab_size):
-        super(RNNModel, self).__init__()
-        self.rnn = rnn_layer
-        self.hidden_size = rnn_layer.hidden_size * (2 if rnn_layer.bidirectional else 1)
-        self.vocab_size = vocab_size
-        self.dense = nn.Linear(self.hidden_size, vocab_size)
-        self.state = None
+class Model(nn.Module):
+    def __init__(self, input_size, hidden_size):
+        super(Model, self).__init__()
+        self.rnn = nn.RNN(input_size=input_size, hidden_size=hidden_size, nonlinearity='relu')
 
-    def forward(self, inputs, state):  # inputs: (batch, seq_len)
-        # 获取one-hot向量表示
-        X = F.one_hot(inputs, self.vocab_size)  # X是个list
-        Y, self.state = self.rnn(torch.stack(X), state)
-        # 全连接层会首先将Y的形状变成(num_steps * batch_size, num_hiddens)，它的输出
-        # 形状为(num_steps * batch_size, vocab_size)
-        output = self.dense(Y.view(-1, Y.shape[-1]))
-        return output, self.state
+    def forward(self, x):
+        return self.rnn(x)
 
 
+path = os.path.join('~', 'Datasets', 'MNIST')
+path = os.path.expanduser(path)
+transforms = torchvision.transforms.Compose(
+    [
+        torchvision.transforms.ToTensor(),
+        torchvision.transforms.Normalize(
+            (0.1307,), (0.3081,))
+    ]
+)
+train = torchvision.datasets.MNIST(path, train=True, transform=transforms, download=True)
+batch_size = 32
+input_size = 28 * 28
+hidden_size = 10
 
+data_loader = DataLoader(train, shuffle=False, batch_size=batch_size)
 
+net = Model(input_size, hidden_size)
+
+loss = nn.CrossEntropyLoss()
+optimizer = optim.Adam(net.parameters())
+if __name__ == '__main__':
+    for x, y in data_loader:
+        optimizer.zero_grad()
+        y_hat, _ = net(x.view(batch_size, -1, input_size))
+        y_hat = y_hat.view(batch_size, -1)
+        l = loss(y_hat, y)
+        l.backward()
+        optimizer.step()
+        with torch.no_grad():
+            print((y_hat.max(dim=1).indices == y).sum()/32)
+        print(l.item())
